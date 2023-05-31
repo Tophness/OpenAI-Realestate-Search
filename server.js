@@ -20,7 +20,7 @@ app.use('/', proxy('https://services.realestate.com.au/services/listings/search'
       if (data.tieredResults) {
         let trimmedData = data.tieredResults[0].results;
         let returnJSON = {
-          totalListings: data.tieredResults.totalResultsCount,
+          totalListings: data.totalResultsCount,
           currentPage: data.resolvedQuery.page,
           pageSize: data.resolvedQuery.pageSize,
           results: null
