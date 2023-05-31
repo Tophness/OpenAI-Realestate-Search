@@ -18,9 +18,13 @@ app.use('/', proxy('https://services.realestate.com.au/services/listings/search'
     if (req.url.indexOf('?query=') !== -1) {
       const data = JSON.parse(proxyResData.toString('utf8'));
       if (data.tieredResults) {
-        const resCount = data.tieredResults[0].count;
-        const resTier = data.tieredResults[0].tier;
+        const totalResultsCount = data.tieredResults.totalResultsCount;
+        const cpage = data.resolvedQuery.page;
+        const psize = data.resolvedQuery.pageSize;
         let trimmedData = data.tieredResults[0];
+        trimmedData['totalListings'] = totalResultsCount;
+        trimmedData['currentPage'] = cpage;
+        trimmedData['pageSize'] = psize;
         for (const id in trimmedData.results) {
          if (trimmedData.results.hasOwnProperty(id)) {
            delete trimmedData.results[id].standard;
