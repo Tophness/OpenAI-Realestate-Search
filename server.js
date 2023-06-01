@@ -1,12 +1,58 @@
 const express = require('express');
 const proxy = require('express-http-proxy');
+const {URLSearchParams} = require('url');
+
+function extractUrlParameters(urlString) {
+  const parsedUrl = new URLSearchParams(urlString);
+  const params = Object.fromEntries(parsedUrl.entries());
+  return params;
+}
+
+function constructObject(channel, subdivision, postcode, searchLocation, pageSize, page, propertyType, minimumPrice, maximumPrice, surroundingSuburbs, replaceProjectWithFirstChild) {
+  const obj = {
+    channel: channel,
+    localities: [
+      {
+        subdivision: subdivision,
+        postcode: postcode,
+        searchLocation: searchLocation
+      }
+    ],
+    pageSize: pageSize,
+    page: page,
+    filters: {
+      propertyTypes: [propertyType],
+      priceRange: {
+        minimum: minimumPrice,
+        maximum: maximumPrice
+      },
+      surroundingSuburbs: surroundingSuburbs,
+      replaceProjectWithFirstChild: replaceProjectWithFirstChild
+    }
+  };
+  return obj;
+}
 
 const app = express();
 app.use(express.static('public'));
 app.use('/', proxy('https://services.realestate.com.au/services/listings/search', {
   proxyReqOptDecorator: function (proxyReqOpts, srcReq) {
-    if (srcReq.url.indexOf('/?') !== -1 && srcReq.url.indexOf('/services') == -1) {
-      srcReq.url = srcReq.url.replace('/?', '/services/listings/search?')
+    if (srcReq.url.indexOf('/?') !== -1) {
+      const params = extractUrlParameters(srcReq.url.replace('/?',''));
+      const paramObject = constructObject(
+        params.channel,
+        params.subdivision,
+        params.postcode,
+        params.searchLocation,
+        params.pageSize,
+        params.page,
+        params.propertyType,
+        params.minimumPrice,
+        params.maximumPrice,
+        params.surroundingSuburbs,
+        params.replaceProjectWithFirstChild
+      );
+      srcReq.url = '/services/listings/search?query=' + JSON.stringify(paramObject);
     }
     proxyReqOpts.headers["Access-Control-Allow-Origin"] = "*";
     proxyReqOpts.headers["Access-Control-Allow-Methods"] = "*";
